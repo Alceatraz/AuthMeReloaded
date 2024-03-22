@@ -1,6 +1,7 @@
 package fr.xephi.authme.command.executable.totp;
 
 import fr.xephi.authme.ConsoleLogger;
+import fr.xephi.authme.broadcast.PlayerTOTPConfirmEvent;
 import fr.xephi.authme.command.PlayerCommand;
 import fr.xephi.authme.data.auth.PlayerAuth;
 import fr.xephi.authme.data.auth.PlayerCache;
@@ -13,6 +14,7 @@ import fr.xephi.authme.security.totp.TotpAuthenticator.TotpGenerationResult;
 import fr.xephi.authme.service.BukkitService;
 import fr.xephi.authme.service.bungeecord.BungeeSender;
 import fr.xephi.authme.service.bungeecord.MessageType;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 import javax.inject.Inject;
@@ -86,6 +88,9 @@ public class ConfirmTotpCommand extends PlayerCommand {
                 }, 5L);
 
             }
+
+            PlayerTOTPConfirmEvent event = new PlayerTOTPConfirmEvent(player);
+            Bukkit.getServer().getPluginManager().callEvent(event);
 
         } else {
             messages.send(player, MessageKey.ERROR);

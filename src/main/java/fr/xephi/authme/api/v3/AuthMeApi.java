@@ -26,7 +26,7 @@ import java.util.Optional;
 
 /**
  * The current API of AuthMe.
- *
+ * <p>
  * Recommended method of retrieving the AuthMeApi object:
  * <code>
  * AuthMeApi authmeApi = AuthMeApi.getInstance();
@@ -192,7 +192,6 @@ public class AuthMeApi {
      * Get the last (AuthMe) login timestamp of a player.
      *
      * @param playerName The name of the player to process
-     *
      * @return The timestamp of the last login, or null if the player doesn't exist or has never logged in
      */
     public Instant getLastLoginTime(String playerName) {
@@ -238,7 +237,6 @@ public class AuthMeApi {
      *
      * @param playerName The player to register
      * @param password   The password to register the player with
-     *
      * @return true if the player was registered successfully
      */
     public boolean registerPlayer(String playerName, String password) {
@@ -317,7 +315,7 @@ public class AuthMeApi {
     /**
      * Change a user's password
      *
-     * @param name the user name
+     * @param name        the user name
      * @param newPassword the new password
      */
     public void changePassword(String name, String newPassword) {
@@ -350,7 +348,6 @@ public class AuthMeApi {
      * Get the country code of the given IP address.
      *
      * @param ip textual IP address to lookup.
-     *
      * @return two-character ISO 3166-1 alpha code for the country.
      */
     public String getCountryCode(String ip) {
@@ -361,10 +358,15 @@ public class AuthMeApi {
      * Get the country name of the given IP address.
      *
      * @param ip textual IP address to lookup.
-     *
      * @return The name of the country.
      */
     public String getCountryName(String ip) {
         return geoIpService.getCountryName(ip);
     }
+
+    public boolean isTOTPEnabled(String player) {
+        PlayerAuth auth = dataSource.getAuth(player);
+        return auth != null && auth.getTotpKey() != null;
+    }
+
 }

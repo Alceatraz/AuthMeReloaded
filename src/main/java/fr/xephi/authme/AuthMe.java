@@ -5,6 +5,7 @@ import ch.jalu.injector.InjectorBuilder;
 import com.google.common.annotations.VisibleForTesting;
 import fr.xephi.authme.api.v3.AuthMeApi;
 import fr.xephi.authme.command.CommandHandler;
+import fr.xephi.authme.context.Authme2FAStatusCalculator;
 import fr.xephi.authme.datasource.DataSource;
 import fr.xephi.authme.initialization.DataFolder;
 import fr.xephi.authme.initialization.DataSourceProvider;
@@ -32,6 +33,9 @@ import fr.xephi.authme.settings.properties.SecuritySettings;
 import fr.xephi.authme.task.CleanupTask;
 import fr.xephi.authme.task.purge.PurgeService;
 import fr.xephi.authme.util.ExceptionUtils;
+import net.luckperms.api.LuckPerms;
+import net.luckperms.api.LuckPermsProvider;
+import org.bukkit.Bukkit;
 import org.bukkit.Server;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -175,6 +179,16 @@ public class AuthMe extends JavaPlugin {
         // Purge on start if enabled
         PurgeService purgeService = injector.getSingleton(PurgeService.class);
         purgeService.runAutoPurge();
+
+
+        Authme2FAStatusCalculator calculator = new Authme2FAStatusCalculator();
+
+        LuckPerms luckPerms = LuckPermsProvider.get();
+
+        luckPerms.getContextManager().registerCalculator(calculator);
+
+        Bukkit.getPluginManager().registerEvents(calculator, this);
+
     }
 
     /**
