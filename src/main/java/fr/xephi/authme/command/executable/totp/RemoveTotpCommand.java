@@ -9,6 +9,9 @@ import fr.xephi.authme.output.ConsoleLoggerFactory;
 import fr.xephi.authme.message.MessageKey;
 import fr.xephi.authme.message.Messages;
 import fr.xephi.authme.security.totp.TotpAuthenticator;
+import fr.xephi.authme.service.BukkitService;
+import fr.xephi.authme.service.bungeecord.BungeeSender;
+import fr.xephi.authme.service.bungeecord.MessageType;
 import org.bukkit.entity.Player;
 
 import javax.inject.Inject;
@@ -33,6 +36,12 @@ public class RemoveTotpCommand extends PlayerCommand {
     @Inject
     private Messages messages;
 
+    @Inject
+    private BukkitService bukkitService;
+
+    @Inject
+    private BungeeSender bungeeSender;
+
     @Override
     protected void runCommand(Player player, List<String> arguments) {
         PlayerAuth auth = playerCache.getAuth(player.getName());
@@ -55,6 +64,16 @@ public class RemoveTotpCommand extends PlayerCommand {
             playerCache.updatePlayer(auth);
             messages.send(player, MessageKey.TWO_FACTOR_REMOVED_SUCCESS);
             logger.info("Player '" + player.getName() + "' removed their TOTP key");
+
+            if (bungeeSender.isEnabled()) {
+                // As described at https://www.spigotmc.org/wiki/bukkit-bungee-plugin-messaging-channel/
+                // "Keep in mind that you can't send plugin messages directly after a player joins."
+                bukkitService.scheduleSyncDelayedTask(() -> {
+                    logger.info("DEBUG - [BC/totpAdd]  " + player.getName());
+                    bungeeSender.sendAuthMeBungeecordMessage(player, MessageType.TOTP_DISABLE);
+                }, 5L);
+            }
+
         } else {
             messages.send(player, MessageKey.ERROR);
         }

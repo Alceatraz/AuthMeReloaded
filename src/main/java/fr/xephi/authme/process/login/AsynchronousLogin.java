@@ -46,7 +46,7 @@ import java.util.Locale;
  * Asynchronous task for a player login.
  */
 public class AsynchronousLogin implements AsynchronousProcess {
-    
+
     private final ConsoleLogger logger = ConsoleLoggerFactory.get(AsynchronousLogin.class);
 
     @Inject
@@ -91,7 +91,7 @@ public class AsynchronousLogin implements AsynchronousProcess {
     /**
      * Processes a player's login request.
      *
-     * @param player the player to log in
+     * @param player   the player to log in
      * @param password the password to log in with
      */
     public void login(Player player, String password) {
@@ -123,7 +123,7 @@ public class AsynchronousLogin implements AsynchronousProcess {
      * Logs a player in without requiring a password.
      *
      * @param player the player to log in
-     * @param quiet if true no messages will be sent
+     * @param quiet  if true no messages will be sent
      */
     public void forceLogin(Player player, boolean quiet) {
         PlayerAuth auth = getPlayerAuth(player, quiet);
@@ -138,7 +138,7 @@ public class AsynchronousLogin implements AsynchronousProcess {
      *
      * @param player the player to check
      * @return the PlayerAuth object, or {@code null} if the player doesn't exist or may not log in
-     *         (e.g. because he is already logged in)
+     * (e.g. because he is already logged in)
      */
     private PlayerAuth getPlayerAuth(Player player) {
         return getPlayerAuth(player, false);
@@ -149,9 +149,9 @@ public class AsynchronousLogin implements AsynchronousProcess {
      * the player's {@link PlayerAuth} object.
      *
      * @param player the player to check
-     * @param quiet don't send messages
+     * @param quiet  don't send messages
      * @return the PlayerAuth object, or {@code null} if the player doesn't exist or may not log in
-     *         (e.g. because he is already logged in)
+     * (e.g. because he is already logged in)
      */
     private PlayerAuth getPlayerAuth(Player player, boolean quiet) {
         String name = player.getName().toLowerCase(Locale.ROOT);
@@ -200,11 +200,11 @@ public class AsynchronousLogin implements AsynchronousProcess {
     /**
      * Checks various conditions for regular player login (not used in force login).
      *
-     * @param player the player requesting to log in
-     * @param auth the PlayerAuth object of the player
+     * @param player   the player requesting to log in
+     * @param auth     the PlayerAuth object of the player
      * @param password the password supplied by the player
      * @return true if the password matches and all other conditions are met (e.g. no captcha required),
-     *         false otherwise
+     * false otherwise
      */
     private boolean checkPlayerInfo(Player player, PlayerAuth auth, String password) {
         String name = player.getName().toLowerCase(Locale.ROOT);
@@ -233,8 +233,8 @@ public class AsynchronousLogin implements AsynchronousProcess {
      * Handles a login with wrong password.
      *
      * @param player the player who attempted to log in
-     * @param auth the PlayerAuth object of the player
-     * @param ip the ip address of the player
+     * @param auth   the PlayerAuth object of the player
+     * @param ip     the ip address of the player
      */
     private void handleWrongPassword(Player player, PlayerAuth auth, String ip) {
         logger.fine(player.getName() + " used the wrong password");
@@ -263,23 +263,27 @@ public class AsynchronousLogin implements AsynchronousProcess {
      * Sets the player to the logged in state.
      *
      * @param player the player to log in
-     * @param auth the associated PlayerAuth object
+     * @param auth   the associated PlayerAuth object
      */
     public void performLogin(Player player, PlayerAuth auth) {
+
         if (player.isOnline()) {
             boolean isFirstLogin = (auth.getLastLogin() == null);
 
             // Update auth to reflect this new login
             String ip = PlayerUtils.getPlayerIp(player);
+
             auth.setRealName(player.getName());
             auth.setLastLogin(System.currentTimeMillis());
             auth.setLastIp(ip);
+
             dataSource.updateSession(auth);
 
             // TODO: send an update when a messaging service will be implemented (SESSION)
 
             // Successful login, so reset the captcha & temp ban count
             String name = player.getName();
+
             loginCaptchaManager.resetLoginFailureCount(name);
             tempbanManager.resetCount(ip, name);
             player.setNoDamageTicks(0);
@@ -305,8 +309,13 @@ public class AsynchronousLogin implements AsynchronousProcess {
             if (bungeeSender.isEnabled()) {
                 // As described at https://www.spigotmc.org/wiki/bukkit-bungee-plugin-messaging-channel/
                 // "Keep in mind that you can't send plugin messages directly after a player joins."
-                bukkitService.scheduleSyncDelayedTask(() ->
-                    bungeeSender.sendAuthMeBungeecordMessage(player, MessageType.LOGIN), 5L);
+                bukkitService.scheduleSyncDelayedTask(() -> bungeeSender.sendAuthMeBungeecordMessage(player, MessageType.LOGIN), 5L);
+                bukkitService.scheduleSyncDelayedTask(() -> {
+                    MessageType messageType = auth.getTotpKey() == null ? MessageType.TOTP_DISABLE : MessageType.TOTP_ENABLE;
+                    logger.info("DEBUG - [BC/login]  " + player.getName() + " TOTP -> " + messageType.name());
+                    bungeeSender.sendAuthMeBungeecordMessage(player, messageType);
+                }, 10L);
+
             }
 
             // As the scheduling executes the Task most likely after the current
@@ -322,7 +331,7 @@ public class AsynchronousLogin implements AsynchronousProcess {
     /**
      * Sends info about the other accounts owned by the given player to the configured users.
      *
-     * @param auths the names of the accounts also owned by the player
+     * @param auths  the names of the accounts also owned by the player
      * @param player the player
      */
     private void displayOtherAccounts(List<String> auths, Player player) {
@@ -363,7 +372,7 @@ public class AsynchronousLogin implements AsynchronousProcess {
      * for the given player and IP address.
      *
      * @param player the player to process
-     * @param ip the associated ip address
+     * @param ip     the associated ip address
      * @return true if the threshold has been reached, false otherwise
      */
     @VisibleForTesting

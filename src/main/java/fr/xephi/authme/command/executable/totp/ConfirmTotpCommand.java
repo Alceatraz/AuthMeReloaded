@@ -10,6 +10,9 @@ import fr.xephi.authme.message.MessageKey;
 import fr.xephi.authme.message.Messages;
 import fr.xephi.authme.security.totp.GenerateTotpService;
 import fr.xephi.authme.security.totp.TotpAuthenticator.TotpGenerationResult;
+import fr.xephi.authme.service.BukkitService;
+import fr.xephi.authme.service.bungeecord.BungeeSender;
+import fr.xephi.authme.service.bungeecord.MessageType;
 import org.bukkit.entity.Player;
 
 import javax.inject.Inject;
@@ -33,6 +36,12 @@ public class ConfirmTotpCommand extends PlayerCommand {
 
     @Inject
     private Messages messages;
+
+    @Inject
+    private BukkitService bukkitService;
+
+    @Inject
+    private BungeeSender bungeeSender;
 
     @Override
     protected void runCommand(Player player, List<String> arguments) {
@@ -67,6 +76,17 @@ public class ConfirmTotpCommand extends PlayerCommand {
             auth.setTotpKey(totpDetails.getTotpKey());
             playerCache.updatePlayer(auth);
             logger.info("Player '" + player.getName() + "' has successfully added a TOTP key to their account");
+
+            if (bungeeSender.isEnabled()) {
+                // As described at https://www.spigotmc.org/wiki/bukkit-bungee-plugin-messaging-channel/
+                // "Keep in mind that you can't send plugin messages directly after a player joins."
+                bukkitService.scheduleSyncDelayedTask(() -> {
+                    logger.info("DEBUG - [BC/totpAdd]  " + player.getName());
+                    bungeeSender.sendAuthMeBungeecordMessage(player, MessageType.TOTP_ENABLE);
+                }, 5L);
+
+            }
+
         } else {
             messages.send(player, MessageKey.ERROR);
         }
